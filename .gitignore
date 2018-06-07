@@ -1,0 +1,10 @@
+/backup
+/bin
+/build
+/data
+/lib
+libcuda*
+lsf*
+ones*
+/projectionMatrices
+/results
