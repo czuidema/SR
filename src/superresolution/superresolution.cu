@@ -337,14 +337,14 @@ void computeSuperresolutionUngerGPU
 
 
 
-	for(int i=0;i<1;i++){
+	for(int i=0;i<oi;i++){
 		fprintf(stderr," %i",i);
 		//DUAL TV
 		dualTVHuber_kernel<<<dimGrid,dimBlock,dimBlock.x*dimBlock.y*sizeof(float)>>>
 				(uor_g,xi1_g,xi2_g,nx,ny,pitchf1,factor_tv_update,factor_tv_clipping,huber_denom_tv,tau_d);
 		catchkernel;
 
-		fprintf(stderr,"\nTEST 1");
+
 
 		//DUAl DATA
 		float tau_data = tau_d;
@@ -354,24 +354,24 @@ void computeSuperresolutionUngerGPU
 		unsigned int k_m = 0;
 		
 
-		while( k_m < 1  ){
+		while( image != images_g.end() && flow != flowsGPU.end() && k < q_g.size()  ){
 			float *f_g = *image;
 			backwardRegistrationBilinearValueTex(uor_g,flow->u_g,flow->v_g,projectedImage,0.0f,nx,ny,pitchf1,pitchf1,1.0f,1.0f);
 			// PREPARING THE PROJECTION MATRICES.
-                        fprintf(stderr,"\nTEST 2");
+                        
 			if(k != 0)
-                        {	
-				fprintf(stderr,"\nTEST 33");
+			{ 
+
                                 rowIndexVector.insert(rowIndexVector.begin(), columnIndexAllVector.begin() + sumNNZ,
                                                 columnIndexAllVector.begin() + sumNNZ + nnzAllVector[k_m]);
-				fprintf(stderr,"\nTEST 3.0");
+			
                                 columnIndexVector.insert(columnIndexVector.begin(), columnIndexAllVector.begin() + sumNNZ,
                                                 columnIndexAllVector.begin() + sumNNZ + nnzAllVector[k_m]);
-				fprintf(stderr,"\nTEST 3.1");
+				
                                 valuesVector.insert(valuesVector.begin(), valuesAllVector.begin() + sumNNZ,
                                                 valuesAllVector.begin() + sumNNZ + nnzAllVector[k_m]);
 				
-				fprintf(stderr,"\nTEST 3");
+			
                                 sumNNZ += nnzAllVector[k_m];
                                 cooRowIndexHostPtr = (int *)   malloc(nnz*sizeof(cooRowIndexHostPtr[0]));
                                 cooColIndexHostPtr = (int *)   malloc(nnz*sizeof(cooColIndexHostPtr[0]));
@@ -379,8 +379,7 @@ void computeSuperresolutionUngerGPU
                                 cooRowIndexHostPtr = &rowIndexVector[0];
                                 cooColIndexHostPtr = &columnIndexVector[0];
                                 cooValHostPtr = &valuesVector[0];
-				fprintf(stderr,"\nTEST 3");
-                                nnz=columnIndexVector.size();
+			        nnz=columnIndexVector.size();
                                 cudaMalloc((void**)&cooRowIndex,nnz*sizeof(cooRowIndex[0]));
 				catchkernel;
                                 cudaStat2 = cudaMalloc((void**)&cooColIndex,nnz*sizeof(cooColIndex[0]));
@@ -388,8 +387,7 @@ void computeSuperresolutionUngerGPU
 				cudaStat3 = cudaMalloc((void**)&cooVal,nnz*sizeof(cooVal[0]));
                                 catchkernel;
 				cudaStat4 = cudaMalloc((void**)&y,n*sizeof(y[0]));
-				fprintf(stderr,"\nTEST 3");
-                                cudaStat1 = cudaMemcpy(cooRowIndex, cooRowIndexHostPtr,
+				cudaStat1 = cudaMemcpy(cooRowIndex, cooRowIndexHostPtr,
                                    (size_t)(nnz*sizeof(cooRowIndex[0])),
                                    cudaMemcpyHostToDevice);
 				catchkernel;
@@ -408,8 +406,7 @@ void computeSuperresolutionUngerGPU
                                 status= cusparseScsrmv(handle,CUSPARSE_OPERATION_NON_TRANSPOSE, n, n, nnz,
                                    &alpha, descr, cooVal, csrRowPtr, cooColIndex,
                                    &atlasLowRes[0], &beta, &projectedImage[0]);
-				
-				fprintf(stderr,"\nTEST 4");
+							
                                 
 				k_m++;
                         }
@@ -422,7 +419,7 @@ void computeSuperresolutionUngerGPU
 				float *temp = projectedImage; projectedImage = temp2_g; temp2_g = temp;
 			}
 
-		//while(){
+		while( image != images_g.end() && flow != flowsGPU.end() && k < q_g.size() ){
 			resampleAreaParallelSeparateAdjoined(q_g[k],projectedImage,nx_orig,ny_orig,pitchf1_orig,nx,ny,pitchf1,temp4_g);
 			if(blur > 0.0f){
 				gaussBlurSeparateMirrorGpu(projectedImage,temp2_g,nx,ny,pitchf1,blur,blur,(int)(3.0f*blur),temp4_g,NULL);
@@ -440,7 +437,7 @@ void computeSuperresolutionUngerGPU
 			k++;
 			flow++;
 			image++;
-	//}
+		}
 		primal1N_kernel<<<dimGrid,dimBlock,dimBlock.x*dimBlock.y*sizeof(float)*2>>>
 				(atlasHighRes,xi1_g,xi2_g,u_g,uor_g,nx,ny,pitchf1,factor_tv_update,factor_degrade_update,tau_p,overrelaxation);
 		

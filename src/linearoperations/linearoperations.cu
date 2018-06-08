@@ -88,10 +88,10 @@ __global__ void backwardRegistrationValue_tex_kernel
 	const int pg = y*pitchf1_out+x;
 
 	if(x<nx && y<ny){
-		//float xx = (float)x+flow1_g[pg]/hx;
-		//float yy = (float)y+flow2_g[pg]/hy;
-		//out_g[pg] = (xx < 0.0f || yy < 0.0f || xx > (float)(nx-1) || yy > (float)(ny-1))
-		//		? 0.0f : tex2D(tex_linearoperation,xx+LO_TEXTURE_OFFSET,yy+LO_TEXTURE_OFFSET);
+		float xx = (float)x+flow1_g[pg]/hx;
+		float yy = (float)y+flow2_g[pg]/hy;
+		out_g[pg] = (xx < 0.0f || yy < 0.0f || xx > (float)(nx-1) || yy > (float)(ny-1))
+				? 0.0f : tex2D(tex_linearoperation,xx+LO_TEXTURE_OFFSET,yy+LO_TEXTURE_OFFSET);
 	}
 }
 
@@ -290,9 +290,9 @@ void forewardRegistrationBilinearAtomic
 		int         pitchf1
 )
 {
-	//dim3 dimBlock(LO_BW,LO_BH);
-	//dim3 dimGrid((nx%LO_BW) ? (nx/LO_BW+1) : (nx/LO_BW),(ny%LO_BH) ? (ny/LO_BH+1) : (ny/LO_BH));
-	//forewardRegistrationAtomic_Kernel<<<dimGrid,dimBlock>>>(flow1_g,flow2_g,in_g,out_g,nx,ny,pitchf1);
+	dim3 dimBlock(LO_BW,LO_BH);
+	dim3 dimGrid((nx%LO_BW) ? (nx/LO_BW+1) : (nx/LO_BW),(ny%LO_BH) ? (ny/LO_BH+1) : (ny/LO_BH));
+	forewardRegistrationAtomic_Kernel<<<dimGrid,dimBlock>>>(flow1_g,flow2_g,in_g,out_g,nx,ny,pitchf1);
 	catchkernel;
 }
 
